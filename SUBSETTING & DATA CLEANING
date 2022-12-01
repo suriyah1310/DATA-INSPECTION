@@ -1,0 +1,251 @@
+# Data Inspection and Subsetting with GapMinder
+
+## A First Dive
+
+* We are all going to **start with an new, empty notebook**, and create and edit cells by **typing the appropriate code or text** (avoiding copy-and-pasting).
+
+* It is absolutely fine, and expected, that you won't understand all of the code involved. For the moment, let us think more broadly about the goal of each cell; later, and iteratively, we will revisit the code and unpack things.
+
+* Firstly, we should import some essential modules for manipulating and visualising datasets; also, do some very basic configuration of the visualisation engine running behind the scenes.
+
+### Preamble: Importing and Configuring Essential Packages
+
+This will naturally look cryptic to most - the key points to take away are:
+
+* the essential modules for data visualisation: `matplotlib`, `seaborn`
+* ...and for data manipulation: `pandas`, `numpy`
+* ...and for machine learning: `scikit-learn`
+* `sns.set` sets up the visualisation engine (e.g., default size of figures)
+* the `%` *magic* statements tell Jupyter Lab to place output plots in the notebook itself and to use higher resolution if possible.
+
+%matplotlib inline
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+sns.set(
+    { "figure.figsize": (8, 6) },
+    style='ticks',
+    color_codes=True,
+    font_scale=0.8
+)
+%config InlineBackend.figure_formats = set(('retina', 'svg'))
+
+### The (Simplified) GapMinder Dataset
+
+* We will make use of the simplified `gapminder` dataset, which concerns records of population, life expectancy, and GDP of countries spanning some 50 years. The dataset can be downloaded from [here](https://github.com/jennybc/gapminder/blob/master/inst/extdata/gapminder.tsv).
+    - Have a look at the dataset rendered at the GitHub link and browse its structure and content for a quick understanding of the data.
+
+* It is a tab-separated value (`.tsv`) text file. One is able to see it raw [here](https://github.com/jennybc/gapminder/blob/master/inst/extdata/gapminder.tsv?raw=True).
+
+* For more on `gapminder`, you might want to check some of [Hans Rosling's TED talks](https://www.ted.com/playlists/474/the_best_hans_rosling_talks_yo) or the book [Factfulness: Ten Reasons We're Wrong About the World--and Why Things Are Better Than You Think](https://g.co/kgs/bEBSWN).
+
+* I have added the dataset to my GitHub for convenience.
+
+* We will ask `pandas` to read the data file and instantiate a **DataFrame** object, which we assign to the variable named `gm` for later reference.
+
+* The URL to the data file, provided as an **argument** to `.read_csv`, should be enclosed by a pair of single quotes (you might want to copy the link to the raw data from a previous slide).
+
+* `sep=\t` indicates that the data is tab-separated (rather the comma-separated).
+
+gm = pd.read_csv(
+    'https://raw.githubusercontent.com/gerberl/6G7V0026-2223/main/datasets/gapminder.tsv',
+    sep='\t'
+)
+
+# Let us inspect the data by, say, just take a few of the top rows.
+gm.head(20)
+
+What follows are some variations on getting familiar with the data with some simple inspection that relies on DataFrame **methods**.
+
+gm.head()
+
+gm.sample()
+
+gm.sample(10)
+
+gm.tail(12)
+
+**checkpoint**: say we would like to inspect the first 20 rows, and sample at least 10 observations from the dataset. Please write the corresponding code.
+
+### A Data Science Question
+
+* How does the data distribution of life expectancy varies over the \~50 years of observations? Are there any clear trends or patterns? Anything unusual about the data?
+
+# Could we obtain which years have observations been recorded for?
+gm['year'].value_counts()
+
+# What does the output tell us?
+
+* A series of boxplots on `Life Expectancy`, one for each `Year`, could tell us something about our original question?
+
+ax = sns.boxplot(x='year', y='lifeExp', showmeans=True, data=gm)
+ax.set_ylabel('Life Expectancy')
+ax.set_xlabel('Year');
+
+### Reflection and Exercises
+
+* In a new text cell (below the chart, I'd suggest) discuss what are your findings. Would you have an explanation as to why sometimes the mean is above the median but, other times, below?
+
+* We have used `.head()` to inspect the initial rows of the dataset for a quick inspection. Similarly, now, add a cell for producing a random sample of 5 rows (tip: `.sample()`) and another for looking into the last 12 rows (tip: `.tail()`).
+
+## A Second, Deeper Dive
+
+### Subsetting DataFrames by Specifying Row and Column Labels
+
+**Dataframes** are **objects** that can be seen as tabular structures with **rows** and **columns**. Rows and columns are associated with **indices**, and indices contain **labels**. One can think of each label being a name of a column (i.e., a header) or of a row (i.e., a row number). 
+
+Accessing individual rows and columns is achieved via the operator `[]` or the property `.loc[]`.
+
+In many scenarios, the application of a method such as `.head()` or `.loc[]` on a DataFrame returns a new DataFrame object (or view of an object, but let us not worry about this right now).
+
+gm['year'].head()
+
+gm.head()['year']
+
+gm.loc[0]
+
+gm.loc[0, 'lifeExp']
+
+gm.loc[0]['lifeExp']
+
+Instead of using a single row or column label, one can provide **a list** of labels.
+
+gm.loc[ [0,12,24] ]
+
+gm[ ['country', 'year', 'lifeExp'] ]
+
+gm.loc[ [0,12,24], ['country', 'year', 'lifeExp'] ]
+
+The following are not quite equivalent - we shouldn't worry too much about the distinction at this stage. But we should say that one returns a two-dimensional DataFrame and the other a uni-dimensional DataFrame (referred to as a `pandas` **Series**), if you'd like.
+
+gm.loc[ [0] ]
+
+gm.loc[0]
+
+**checkpoint**: it is a good idea to practice some of the above. You could write code cells that do the following:
+
+* produce a DataFrame with only the columns `year` and `pop`. For conciseness, you can simply take the `.head()` of the result.
+* obtain a DataFrame with the rows with labels `10`, `20`, `100`, and `1000` - for no particular reason, rather than just trying out subsetting expressions.
+* finally, a DataFrame for the subset of columns and rows expressed above.
+
+By the way, one could also use **ranges of labels**, rather than listing every single one were are interesting in:
+
+gm.loc[0:5]
+
+gm.loc[0:5, 'lifeExp':'gdpPercap']
+
+One can omit the being and/or the end of the range:
+
+gm.loc[1700:]
+
+gm.loc[1700:, 'lifeExp':]
+
+gm.loc[:, 'lifeExp':]
+
+**checkpoint**: perhaps you would like to play with code on ranges above and try some alternatives?
+
+### Subsetting DataFrames with Logical Conditions
+
+If I am interested in only those latest observations dated of 2007...
+
+One of the options is to use the method `.query()` - it can be more intuitive than our second option, but more limited, perhaps.
+
+gm.query("year==2007").head()
+
+Quite commonly, Python data scientists will use **boolean masks** (in other words, vectors of True/False values). I am only using `.head()` to supress the output of too many rows - this is typical strategy in inspecting data and expressions.
+
+gm.loc[ gm['year']==2007 ].head()
+
+gm['year']==2007
+
+How about which countries have had life expectancy equals to or greater than 80 years?
+
+gm.loc[ gm['lifeExp']>=80  ]
+
+OK, some countries appear more than once. Can I get a quick list of unique country names? Yes, I can. It is worth emphasising that can **chain** DataFrame-producing statements, creating pipelines. The output of one method becomes the input of another.
+
+gm.loc[ gm['lifeExp']>=80 ]['country'].drop_duplicates()
+
+Confusing? You can split a single statement into several lines, by assigning intermediate results to variables.
+
+# the subset of data for life expectancy equal to or greater than 80 years
+gm_gte80 = gm.loc[ gm['lifeExp']>=80 ]
+gm_gte80_country = gm_gte80[['country']]
+gm_gte80_country.drop_duplicates()
+
+**checkpoint**: could you write Code cells for retrieving the following subsets of data?
+
+* all the observations in 1952.
+* all those that have a GDP-per-capita greater than US$30K.
+* are there any instances where life expectancy was lower than 30 years?
+
+### DataFrame Shape
+
+gm.shape
+
+len(gm)
+
+gm.shape[0]
+
+gm.shape[1]
+
+### Subsetting DataFrames: Multiple Conditions
+
+You will need the brackets to make sure that the evaluation order is correct.
+
+gm.loc[ (gm['year']==1952) & (gm['lifeExp']>70) ]
+
+gm.loc[ (gm['year']==2007) & (gm['lifeExp']>70) ]
+
+Would you to like to know how many? `.shape` or `len` will help you here.
+
+the_subset = gm.loc[ (gm['year']==1952) & (gm['lifeExp']>70) ]
+len(the_subset)
+
+the_subset = gm.loc[ (gm['year']==2007) & (gm['lifeExp']>70) ]
+len(the_subset)
+
+What is a suitable interpretaiton of these next two pieces of code?
+
+gm.loc[ (gm['lifeExp']>=78) & (gm['lifeExp']>=80) ].head()
+
+gm.loc[ (gm['lifeExp']<30) | (gm['lifeExp']>81) ]
+
+### Sorting the Rows of a DataFrame
+
+# inline documentation on a method? Use the exclamation mark
+# gm.sort_values?
+
+gm_2007 = gm.loc[ gm['year']==2007 ]
+gm_2007.sort_values(by='pop').head()
+
+gm_2007.sort_values(by='pop', ascending=False).head()
+
+## Exercises
+
+As a reminder, this is the DataFrame we are starting with:
+
+gm.head(1)
+
+1. Select only the observations for the year of 1972.
+
+2. For the resulting DataFrame of query above, how many data instances there are?
+
+3. Obtain the rows for Brazil only.
+
+4. What are the years for which observations have been recorded? (you might want to check what methods such as `.unique()` and `.value_counts()` can do for you here.
+
+5. And how many different years?
+
+6. What are top-10 countries in 2007 with with respect to life expectancy?
+
+7. Obtain the subset of observations for Asia in 2007.
+
+8. Produce the observations for South America for the period between 2000 and 2009.
+
+9. Show life expectancy and GDP-per-capita for Brazil.
+
+10. How many observations do we have for each continent?
+
+11. What is the life expectancy for Brazil measured in 2007?
